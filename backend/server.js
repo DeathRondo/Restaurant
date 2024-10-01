@@ -1,5 +1,5 @@
 const express = require('express');
-const mysql = require('mysql');
+const mysql = require('mysql2');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 
@@ -35,6 +35,60 @@ app.post('/add-data', (req, res) => {
       res.status(500).send('Error al insertar datos');
     } else {
       res.status(200).send('Datos insertados con éxito');
+    }
+  });
+});
+
+// server.js
+app.get('/productos', (req, res) => {
+  const query = 'SELECT * FROM productos';
+  db.query(query, (err, result) => {
+    if (err) {
+      console.error('Error al obtener productos:', err);
+      res.status(500).send('Error al obtener productos');
+    } else {
+      res.status(200).json(result);
+    }
+  });
+});
+
+// server.js
+app.post('/guardar-pedido', (req, res) => {
+  const { mesa, carrito } = req.body;
+
+  if (!mesa || carrito.length === 0) {
+    return res.status(400).send('Mesa y carrito son obligatorios');
+  }
+
+  // Guardar el pedido en la base de datos
+  const query = 'INSERT INTO pedidos (mesa, productos, total) VALUES (?, ?, ?)';
+  const productos = JSON.stringify(carrito);
+  const total = carrito.reduce((acc, producto) => acc + producto.precio, 0);
+
+  db.query(query, [mesa, productos, total], (err, result) => {
+    if (err) {
+      console.error('Error al guardar el pedido:', err);
+      res.status(500).send('Error al guardar el pedido');
+    } else {
+      res.status(200).send('Pedido guardado exitosamente');
+    }
+  });
+});
+
+app.post('/agregar-producto', (req, res) => {
+  const { nombre, precio } = req.body;
+
+  if (!nombre || !precio) {
+    return res.status(400).send('Nombre y precio son obligatorios');
+  }
+
+  const query = 'INSERT INTO productos (nombre, precio) VALUES (?, ?)';
+  db.query(query, [nombre, precio], (err, result) => {
+    if (err) {
+      console.error('Error al agregar el producto:', err);
+      res.status(500).send('Error al agregar el producto');
+    } else {
+      res.status(200).send('Producto agregado con éxito');
     }
   });
 });
